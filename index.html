@@ -167,19 +167,19 @@ function selectColor(hex) {
     `<span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:${hex};border:1px solid #ccc;vertical-align:middle;margin-right:5px;"></span>${hex}`;
 }
 
+function calcPiezasXKilo() {
+  const piezas = parseFloat(document.getElementById('cant_piezas').value) || 0;
+  const rend   = parseFloat(document.getElementById('rendimiento').value) || 0;
+  document.getElementById('piezas_x_kilo').value = (piezas && rend) ? (piezas / rend).toFixed(2) : '';
+}
+function calcRendimiento() {
+  const peso  = parseFloat(document.getElementById('peso_trazo').value) || 0;
+  const panos = parseFloat(document.getElementById('cant_panos').value) || 0;
+  if (peso && panos) document.getElementById('rendimiento').value = ((peso * panos) / 1000).toFixed(3);
+  calcPiezasXKilo();
+}
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('color-picker').addEventListener('input', e => selectColor(e.target.value));
-  function calcPiezasXKilo() {
-    const piezas = parseFloat(document.getElementById('cant_piezas').value) || 0;
-    const rend   = parseFloat(document.getElementById('rendimiento').value) || 0;
-    document.getElementById('piezas_x_kilo').value = (piezas && rend) ? (piezas / rend).toFixed(2) : '';
-  }
-  function calcRendimiento() {
-    const peso  = parseFloat(document.getElementById('peso_trazo').value) || 0;
-    const panos = parseFloat(document.getElementById('cant_panos').value) || 0;
-    if (peso && panos) document.getElementById('rendimiento').value = ((peso * panos) / 1000).toFixed(3);
-    calcPiezasXKilo();
-  }
   document.getElementById('peso_trazo').addEventListener('input', calcRendimiento);
   document.getElementById('cant_panos').addEventListener('input', calcRendimiento);
   document.getElementById('cant_piezas').addEventListener('input', calcPiezasXKilo);
