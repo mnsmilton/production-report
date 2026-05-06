@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Producción Textil</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f3; color: #1a1a1a; padding: 24px; }
+  h1 { font-size: 18px; font-weight: 500; margin-bottom: 20px; }
+  .tabs { display: flex; gap: 4px; margin-bottom: 16px; }
+  .tab { padding: 8px 18px; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; border: 0.5px solid #ccc; background: #f0f0ee; color: #888; }
+  .tab.active { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+  .section { background: #fff; border: 0.5px solid #ddd; border-radius: 12px; padding: 16px 20px; margin-bottom: 12px; }
+  .section-title { font-size: 11px; font-weight: 500; color: #888; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 14px; }
+  .fg { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+  .f { display: flex; flex-direction: column; gap: 4px; }
+  .f label { font-size: 13px; color: #666; }
+  .f input { font-size: 14px; padding: 8px 10px; border: 0.5px solid #ccc; border-radius: 8px; outline: none; background: #fff; color: #1a1a1a; }
+  .f input:focus { border-color: #888; }
+  .f input[readonly] { background: #f5f5f3; color: #888; }
+  .search-row { display: flex; gap: 8px; align-items: flex-end; }
+  .search-row input { flex: 1; font-size: 14px; padding: 8px 10px; border: 0.5px solid #ccc; border-radius: 8px; outline: none; }
+  .btn { padding: 8px 18px; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; border: 0.5px solid #ccc; background: #f0f0ee; color: #1a1a1a; }
+  .btn:hover { background: #e5e5e3; }
+  .btn-save { background: #dbeafe; color: #1e40af; border-color: #93c5fd; }
+  .btn-save:hover { background: #bfdbfe; }
+  .btn-new { background: #dcfce7; color: #166534; border-color: #86efac; }
+  .btn-new:hover { background: #bbf7d0; }
+  .status { font-size: 13px; padding: 8px 14px; border-radius: 8px; margin-top: 10px; display: none; }
+  .status.info { background: #dbeafe; color: #1e40af; }
+  .status.success { background: #dcfce7; color: #166534; }
+  .status.error { background: #fee2e2; color: #991b1b; }
+  .btn-row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px; }
+  #form-body { display: none; }
+  .badge { font-size: 11px; padding: 2px 8px; border-radius: 6px; margin-left: 8px; }
+  .badge-update { background: #fef9c3; color: #854d0e; }
+  .badge-new { background: #dcfce7; color: #166534; }
+  .pendientes-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .pendientes-table th { text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 500; color: #888; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 0.5px solid #eee; }
+  .pendientes-table td { padding: 10px 12px; border-bottom: 0.5px solid #f0f0ee; vertical-align: middle; }
+  .pendientes-table tr:hover td { background: #f9f9f7; }
+  .pendientes-table tr:last-child td { border-bottom: none; }
+  .btn-edit { padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer; border: 0.5px solid #93c5fd; background: #dbeafe; color: #1e40af; }
+  .btn-edit:hover { background: #bfdbfe; }
+  .etapa { font-size: 11px; padding: 2px 8px; border-radius: 6px; }
+  .etapa-corte { background: #fef9c3; color: #854d0e; }
+  .etapa-maquila { background: #fed7aa; color: #9a3412; }
+  .etapa-serigrafia { background: #e9d5ff; color: #6b21a8; }
+  .etapa-bodega { background: #bbf7d0; color: #166534; }
+  .refresh-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .count-badge { font-size: 12px; color: #888; }
+</style>
+</head>
+<body>
+
+<h1>Producción Textil</h1>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('pendientes', this)">Pendientes</div>
+  <div class="tab" onclick="switchTab('form', this)">Buscar / Editar</div>
+</div>
+
+<div id="tab-pendientes" class="tab-content active">
+  <div class="section">
+    <div class="refresh-row">
+      <p class="section-title" style="margin:0">Órdenes sin fecha en tienda</p>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span class="count-badge" id="count-label"></span>
+        <button class="btn" onclick="cargarPendientes()">↺ Actualizar</button>
+      </div>
+    </div>
+    <div class="status" id="status-pendientes"></div>
+    <div id="pendientes-container" style="margin-top:12px; overflow-x:auto;">
+      <p style="font-size:13px;color:#888">Cargando...</p>
+    </div>
+  </div>
+</div>
+
+<div id="tab-form" class="tab-content">
+  <div class="section">
+    <p class="section-title">Buscar o crear orden</p>
+    <div class="search-row">
+      <input type="text" id="search-orden" placeholder="N° Orden (ej. 534)" />
+      <button class="btn" onclick="buscarOrden()">Buscar</button>
+      <button class="btn btn-new" onclick="nuevaOrden()">+ Nueva</button>
+    </div>
+    <div class="status" id="status-search"></div>
+  </div>
+
+  <div id="form-body">
+    <div class="section">
+      <p class="section-title">Orden y corte <span class="badge" id="mode-badge"></span></p>
+      <div class="fg">
+        <div class="f"><label>N° Orden</label><input type="text" id="orden" /></div>
+        <div class="f"><label>Inicio corte</label><input type="date" id="inicio_corte" /></div>
+        <div class="f"><label>Descripción</label><input type="text" id="descripcion" /></div>
+        <div class="f">
+          <label>Color</label>
+          <input type="hidden" id="color" />
+          <div style="display:flex;align-items:center;gap:10px;margin-top:4px;">
+            <input type="color" id="color-picker" style="width:40px;height:36px;border-radius:8px;border:0.5px solid #ccc;cursor:pointer;padding:2px;" />
+            <span id="color-selected" style="font-size:13px;color:#888;">Sin color</span>
+          </div>
+        </div>
+        <div class="f"><label>Cantidad piezas</label><input type="number" id="cant_piezas" /></div>
+        <div class="f"><label>Peso x trazo (g)</label><input type="number" id="peso_trazo" /></div>
+        <div class="f"><label>Piezas x trazo</label><input type="number" id="piezas_trazo" /></div>
+        <div class="f"><label>Cantidad paños</label><input type="number" id="cant_panos" /></div>
+        <div class="f"><label>Rendimiento (kg)</label><input type="number" step="0.001" id="rendimiento" readonly /></div>
+        <div class="f"><label>Piezas x Kilo</label><input type="number" step="0.01" id="piezas_x_kilo" readonly /></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <p class="section-title">Maquila</p>
+      <div class="fg">
+        <div class="f"><label>Conjunto</label><input type="text" id="conjunto" /></div>
+        <div class="f"><label>Envío maquila</label><input type="date" id="envio_maquila" /></div>
+        <div class="f"><label>Recepción maquila</label><input type="date" id="recepcion_maquila" /></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <p class="section-title">Serigrafía</p>
+      <div class="fg">
+        <div class="f"><label>Envío serigrafía</label><input type="date" id="envio_serigrafia" /></div>
+        <div class="f"><label>Recepción serigrafía</label><input type="date" id="recepcion_serigrafia" /></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <p class="section-title">Producto terminado</p>
+      <div class="fg">
+        <div class="f"><label>Producto terminado bodega</label><input type="date" id="prod_terminado" /></div>
+        <div class="f"><label>Código</label><input type="text" id="codigo" /></div>
+        <div class="f"><label>Piezas dañadas</label><input type="number" id="piezas_danadas" /></div>
+        <div class="f"><label>Colección</label><input type="text" id="coleccion" /></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <p class="section-title">Tienda</p>
+      <div class="fg">
+        <div class="f"><label>Producto tienda</label><input type="date" id="producto_tienda" /></div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-save" onclick="guardar()">Guardar en Sheet</button>
+    </div>
+    <div class="status" id="status-save"></div>
+  </div>
+</div>
+
+<script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx9JO4YU6ZTY84jM6DhiryelWc9WI72cwf0ROFxYFXWOSylDv1sD4Qce39e-bWicw_M0A/exec";
+let rowIndex = null;
+
+function selectColor(hex) {
+  const colorEl = document.getElementById('color');
+  colorEl.value = hex;
+  colorEl.dataset.hex = hex;
+  document.getElementById('color-selected').innerHTML =
+    `<span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:${hex};border:1px solid #ccc;vertical-align:middle;margin-right:5px;"></span>${hex}`;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('color-picker').addEventListener('input', e => selectColor(e.target.value));
+  function calcPiezasXKilo() {
+    const piezas = parseFloat(document.getElementById('cant_piezas').value) || 0;
+    const rend   = parseFloat(document.getElementById('rendimiento').value) || 0;
+    document.getElementById('piezas_x_kilo').value = (piezas && rend) ? (piezas / rend).toFixed(2) : '';
+  }
+  function calcRendimiento() {
+    const peso  = parseFloat(document.getElementById('peso_trazo').value) || 0;
+    const panos = parseFloat(document.getElementById('cant_panos').value) || 0;
+    if (peso && panos) document.getElementById('rendimiento').value = ((peso * panos) / 1000).toFixed(3);
+    calcPiezasXKilo();
+  }
+  document.getElementById('peso_trazo').addEventListener('input', calcRendimiento);
+  document.getElementById('cant_panos').addEventListener('input', calcRendimiento);
+  document.getElementById('cant_piezas').addEventListener('input', calcPiezasXKilo);
+});
+
+function switchTab(tab, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  el.classList.add('active');
+}
+
+function getEtapa(r) {
+  if (!r['Envío Maquila']) return { label: 'En corte', cls: 'etapa-corte' };
+  if (!r['Recepción Maquila']) return { label: 'En maquila', cls: 'etapa-maquila' };
+  if (!r['Recepción Serigrafía']) return { label: 'En serigrafía', cls: 'etapa-serigrafia' };
+  return { label: 'En bodega', cls: 'etapa-bodega' };
+}
+
+function formatFecha(val) {
+  if (!val) return '-';
+  const d = new Date(val);
+  if (isNaN(d)) return '-';
+  return d.toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+function diasDesde(val) {
+  if (!val) return '-';
+  const d = new Date(val);
+  if (isNaN(d)) return '-';
+  d.setHours(0,0,0,0);
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  const dias = Math.round((hoy - d) / 86400000);
+  const color = dias > 30 ? '#dc2626' : dias > 15 ? '#ca8a04' : '#16a34a';
+  return `<span style="font-weight:600;color:${color}">${dias}d</span>`;
+}
+
+async function cargarPendientes() {
+  const container = document.getElementById('pendientes-container');
+  const statusEl  = document.getElementById('status-pendientes');
+  container.innerHTML = '<p style="font-size:13px;color:#888">Cargando...</p>';
+  statusEl.style.display = 'none';
+  try {
+    const res  = await fetch(SCRIPT_URL + '?action=pendientes');
+    const data = await res.json();
+    if (!data.rows || data.rows.length === 0) {
+      container.innerHTML = '<p style="font-size:13px;color:#888;padding:12px 0">No hay órdenes pendientes 🎉</p>';
+      document.getElementById('count-label').textContent = '';
+      return;
+    }
+    document.getElementById('count-label').textContent = data.rows.length + ' pendientes';
+    let html = '<table class="pendientes-table"><thead><tr><th>Orden</th><th>Descripción</th><th>Color</th><th>Inicio corte</th><th>Días</th><th>Etapa</th><th></th></tr></thead><tbody>';
+    data.rows.forEach(r => {
+      const orden = r['# Orden'] || '';
+      const etapa = getEtapa(r);
+      const colorCell = r['__colorHex']
+        ? `<span style="display:inline-block;width:18px;height:18px;border-radius:3px;background:${r['__colorHex']};border:1px solid #ccc;vertical-align:middle;"></span>`
+        : '—';
+      html += `<tr>
+        <td><strong>${orden}</strong></td>
+        <td>${r['Descripción'] || '-'}</td>
+        <td>${colorCell}</td>
+        <td>${formatFecha(r['Inicio Corte'])}</td>
+        <td>${diasDesde(r['Inicio Corte'])}</td>
+        <td><span class="etapa ${etapa.cls}">${etapa.label}</span></td>
+        <td><button class="btn-edit" onclick="editarDesde('${orden}')">Editar</button></td>
+      </tr>`;
+    });
+    html += '</tbody></table>';
+    container.innerHTML = html;
+  } catch(e) {
+    container.innerHTML = '';
+    statusEl.textContent = 'Error: ' + e.message;
+    statusEl.className = 'status error';
+    statusEl.style.display = 'block';
+  }
+}
+
+async function editarDesde(orden) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-form').classList.add('active');
+  document.querySelector('.tab:nth-child(2)').classList.add('active');
+  document.getElementById('search-orden').value = orden;
+  await buscarOrden();
+  window.scrollTo(0, 0);
+}
+
+function showStatus(id, msg, type) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.className = 'status ' + type;
+  el.style.display = 'block';
+  if (type === 'success') setTimeout(() => el.style.display = 'none', 3000);
+}
+
+function toDateInput(val) {
+  if (!val) return '';
+  try { const d = new Date(val); if (!isNaN(d)) return d.toISOString().split('T')[0]; } catch(e) {}
+  return val;
+}
+
+function setField(id, val) {
+  const el = document.getElementById(id);
+  if (!el || val === null || val === undefined || val === '') return;
+  el.value = el.type === 'date' ? toDateInput(val) : val;
+}
+
+function nuevaOrden() {
+  rowIndex = null;
+  document.querySelectorAll('#form-body input').forEach(i => { if (i.type !== 'color') i.value = ''; });
+  document.getElementById('color-selected').textContent = 'Sin color';
+  document.getElementById('mode-badge').textContent = 'Nueva orden';
+  document.getElementById('mode-badge').className = 'badge badge-new';
+  document.getElementById('form-body').style.display = 'block';
+  document.getElementById('status-search').style.display = 'none';
+}
+
+async function buscarOrden() {
+  const orden = document.getElementById('search-orden').value.trim();
+  if (!orden) return;
+  showStatus('status-search', 'Buscando...', 'info');
+  try {
+    const res  = await fetch(SCRIPT_URL + '?orden=' + encodeURIComponent(orden));
+    const data = await res.json();
+    if (data.found) {
+      rowIndex = data.rowIndex;
+      const r  = data.row;
+      setField('orden', r['# Orden']);
+      setField('inicio_corte', r['Inicio Corte']);
+      setField('descripcion', r['Descripción']);
+      if (r['__colorHex']) { document.getElementById('color-picker').value = r['__colorHex']; selectColor(r['__colorHex']); }
+      setField('cant_piezas', r['Cantidad Piezas']);
+      setField('peso_trazo', r['Peso x Trazo (Gramos)']);
+      setField('piezas_trazo', r['Piezas x Trazo']);
+      setField('cant_panos', r['CANTIDAD Paños']);
+      setField('rendimiento', r['RENDIMIENTO (kg)']);
+      setField('piezas_x_kilo', r['Piezas x Kilo']);
+      setField('conjunto', r['Conjunto']);
+      setField('envio_maquila', r['Envío Maquila']);
+      setField('recepcion_maquila', r['Recepción Maquila']);
+      setField('envio_serigrafia', r['Envío Serigrafía']);
+      setField('recepcion_serigrafia', r['Recepción Serigrafía']);
+      setField('prod_terminado', r['Producto Terminado Bodega']);
+      setField('codigo', r['Código']);
+      setField('piezas_danadas', r['Piezas Dañadas']);
+      setField('coleccion', r['Colección']);
+      setField('producto_tienda', r['Producto Tienda']);
+      document.getElementById('mode-badge').textContent = 'Editando fila ' + rowIndex;
+      document.getElementById('mode-badge').className = 'badge badge-update';
+      document.getElementById('form-body').style.display = 'block';
+      showStatus('status-search', 'Orden encontrada', 'success');
+    } else {
+      showStatus('status-search', 'No encontrada. Usa + Nueva para crearla.', 'error');
+      document.getElementById('form-body').style.display = 'none';
+    }
+  } catch(e) {
+    showStatus('status-search', 'Error: ' + e.message, 'error');
+  }
+}
+
+async function guardar() {
+  showStatus('status-save', 'Guardando...', 'info');
+  const row = {
+    '# Orden':                   document.getElementById('orden').value,
+    'Inicio Corte':              document.getElementById('inicio_corte').value,
+    'Descripción':               document.getElementById('descripcion').value,
+    'Color':                     '',
+    'Cantidad Piezas':           document.getElementById('cant_piezas').value,
+    'Peso x Trazo (Gramos)':     document.getElementById('peso_trazo').value,
+    'Piezas x Trazo':            document.getElementById('piezas_trazo').value,
+    'CANTIDAD Paños':            document.getElementById('cant_panos').value,
+    'RENDIMIENTO (kg)':          document.getElementById('rendimiento').value,
+    'Piezas x Kilo':             document.getElementById('piezas_x_kilo').value,
+    'Conjunto':                  document.getElementById('conjunto').value,
+    'Envío Maquila':             document.getElementById('envio_maquila').value,
+    'Recepción Maquila':         document.getElementById('recepcion_maquila').value,
+    'Envío Serigrafía':          document.getElementById('envio_serigrafia').value,
+    'Recepción Serigrafía':      document.getElementById('recepcion_serigrafia').value,
+    'Producto Terminado Bodega': document.getElementById('prod_terminado').value,
+    'Código':                    document.getElementById('codigo').value,
+    'Piezas Dañadas':            document.getElementById('piezas_danadas').value,
+    'Colección':                 document.getElementById('coleccion').value,
+    'Producto Tienda':           document.getElementById('producto_tienda').value
+  };
+  try {
+    const colorHex = document.getElementById('color').dataset.hex || '';
+    const res  = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({ row, rowIndex, colorHex })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showStatus('status-save', data.action === 'updated' ? '✓ Fila actualizada en el Sheet' : '✓ Nueva fila creada en el Sheet', 'success');
+    } else {
+      showStatus('status-save', 'Error al guardar: ' + (data.error || ''), 'error');
+    }
+  } catch(e) {
+    showStatus('status-save', 'Error: ' + e.message, 'error');
+  }
+}
+
+cargarPendientes();
+</script>
+</body>
+</html>
