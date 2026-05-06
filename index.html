@@ -317,7 +317,7 @@ async function buscarOrden() {
       setField('piezas_trazo', r['Piezas x Trazo']);
       setField('cant_panos', r['CANTIDAD Paños']);
       setField('rendimiento', r['RENDIMIENTO (kg)']);
-      setField('piezas_x_kilo', r['Piezas x Kilo']);
+      calcPiezasXKilo();
       setField('conjunto', r['Conjunto']);
       setField('envio_maquila', r['Envío Maquila']);
       setField('recepcion_maquila', r['Recepción Maquila']);
