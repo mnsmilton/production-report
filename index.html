@@ -29,6 +29,8 @@
   .btn-save:hover { background: #bfdbfe; }
   .btn-new { background: #dcfce7; color: #166534; border-color: #86efac; }
   .btn-new:hover { background: #bbf7d0; }
+  .btn-delete { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
+  .btn-delete:hover { background: #fecaca; }
   .status { font-size: 13px; padding: 8px 14px; border-radius: 8px; margin-top: 10px; display: none; }
   .status.info { background: #dbeafe; color: #1e40af; }
   .status.success { background: #dcfce7; color: #166534; }
@@ -171,6 +173,7 @@
     </div>
 
     <div class="btn-row">
+      <button class="btn btn-delete" id="btn-eliminar" onclick="eliminarOrden()" style="display:none;">🗑 Eliminar orden</button>
       <button class="btn btn-save" onclick="guardar()">Guardar en Sheet</button>
     </div>
     <div class="status" id="status-save"></div>
@@ -390,6 +393,7 @@ function nuevaOrden() {
   document.getElementById('color-selected').textContent = 'Sin color';
   document.getElementById('mode-badge').textContent = 'Nueva orden';
   document.getElementById('mode-badge').className = 'badge badge-new';
+  document.getElementById('btn-eliminar').style.display = 'none';
   document.getElementById('form-body').style.display = 'block';
   document.getElementById('status-search').style.display = 'none';
 }
@@ -428,6 +432,7 @@ async function buscarOrden() {
       calcPiezasXKilo();
       document.getElementById('mode-badge').textContent = 'Editando fila ' + rowIndex;
       document.getElementById('mode-badge').className = 'badge badge-update';
+      document.getElementById('btn-eliminar').style.display = 'inline-block';
       document.getElementById('form-body').style.display = 'block';
       showStatus('status-search', 'Orden encontrada', 'success');
     } else {
@@ -479,6 +484,31 @@ async function guardar() {
       showStatus('status-save', data.action === 'updated' ? '✓ Fila actualizada en el Sheet' : '✓ Nueva fila creada en el Sheet', 'success');
     } else {
       showStatus('status-save', 'Error al guardar: ' + (data.error || ''), 'error');
+    }
+  } catch(e) {
+    showStatus('status-save', 'Error: ' + e.message, 'error');
+  }
+}
+
+async function eliminarOrden() {
+  const orden = document.getElementById('orden').value;
+  if (!rowIndex) return;
+  if (!confirm(`¿Eliminar la orden #${orden}? Esta acción no se puede deshacer.`)) return;
+  showStatus('status-save', 'Eliminando...', 'info');
+  try {
+    const res  = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'delete', rowIndex, token: API_TOKEN })
+    });
+    const data = await res.json();
+    if (data.success) {
+      document.getElementById('form-body').style.display = 'none';
+      document.getElementById('search-orden').value = '';
+      document.getElementById('status-search').style.display = 'none';
+      showStatus('status-save', `✓ Orden #${orden} eliminada.`, 'success');
+      rowIndex = null;
+    } else {
+      showStatus('status-save', 'Error: ' + (data.error || ''), 'error');
     }
   } catch(e) {
     showStatus('status-save', 'Error: ' + e.message, 'error');
