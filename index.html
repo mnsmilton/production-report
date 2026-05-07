@@ -61,6 +61,7 @@
 <div class="tabs">
   <div class="tab active" onclick="switchTab('pendientes', this)">Pendientes</div>
   <div class="tab" onclick="switchTab('form', this)">Buscar / Editar</div>
+  <div class="tab" onclick="switchTab('completadas', this)">Completadas</div>
 </div>
 
 <div id="tab-pendientes" class="tab-content active">
@@ -74,6 +75,22 @@
     </div>
     <div class="status" id="status-pendientes"></div>
     <div id="pendientes-container" style="margin-top:12px; overflow-x:auto;">
+      <p style="font-size:13px;color:#888">Cargando...</p>
+    </div>
+  </div>
+</div>
+
+<div id="tab-completadas" class="tab-content">
+  <div class="section">
+    <div class="refresh-row">
+      <p class="section-title" style="margin:0">Órdenes en tienda</p>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span class="count-badge" id="count-completadas"></span>
+        <button class="btn" onclick="cargarCompletadas()">↺ Actualizar</button>
+      </div>
+    </div>
+    <div class="status" id="status-completadas"></div>
+    <div id="completadas-container" style="margin-top:12px; overflow-x:auto;">
       <p style="font-size:13px;color:#888">Cargando...</p>
     </div>
   </div>
@@ -224,6 +241,7 @@ function switchTab(tab, el) {
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
   document.getElementById('tab-' + tab).classList.add('active');
   el.classList.add('active');
+  if (tab === 'completadas') cargarCompletadas();
 }
 
 function getEtapa(r) {
@@ -281,6 +299,48 @@ async function cargarPendientes() {
         <td>${formatFecha(get('Inicio Corte'))}</td>
         <td>${diasDesde(get('Inicio Corte'))}</td>
         <td><span class="etapa ${etapa.cls}">${etapa.label}</span></td>
+        <td><button class="btn-edit" onclick="editarDesde('${orden}')">Editar</button></td>
+      </tr>`;
+    });
+    html += '</tbody></table>';
+    container.innerHTML = html;
+  } catch(e) {
+    container.innerHTML = '';
+    statusEl.textContent = 'Error: ' + e.message;
+    statusEl.className = 'status error';
+    statusEl.style.display = 'block';
+  }
+}
+
+async function cargarCompletadas() {
+  const container = document.getElementById('completadas-container');
+  const statusEl  = document.getElementById('status-completadas');
+  container.innerHTML = '<p style="font-size:13px;color:#888">Cargando...</p>';
+  statusEl.style.display = 'none';
+  try {
+    const res  = await fetch(SCRIPT_URL + '?action=completadas&token=' + API_TOKEN);
+    const data = await res.json();
+    if (!data.rows || data.rows.length === 0) {
+      container.innerHTML = '<p style="font-size:13px;color:#888;padding:12px 0">No hay órdenes completadas.</p>';
+      document.getElementById('count-completadas').textContent = '';
+      return;
+    }
+    document.getElementById('count-completadas').textContent = data.rows.length + ' completadas';
+    let html = '<table class="pendientes-table"><thead><tr><th>Orden</th><th>Descripción</th><th>Color</th><th>Inicio corte</th><th>En tienda</th><th>Duración</th><th></th></tr></thead><tbody>';
+    data.rows.forEach(r => {
+      setCache(r);
+      const orden     = get('# ORDEN') || '';
+      const colorCell = r['__colorHex']
+        ? `<span style="display:inline-block;width:18px;height:18px;border-radius:3px;background:${r['__colorHex']};border:1px solid #ccc;vertical-align:middle;"></span>`
+        : '—';
+      const duracion  = get('Duración Total');
+      html += `<tr>
+        <td><strong>${orden}</strong></td>
+        <td>${get('Descripción') || '-'}</td>
+        <td>${colorCell}</td>
+        <td>${formatFecha(get('Inicio Corte'))}</td>
+        <td>${formatFecha(get('Producto Tienda'))}</td>
+        <td style="text-align:center;font-weight:600;color:#16a34a;">${duracion ? duracion + 'd' : '—'}</td>
         <td><button class="btn-edit" onclick="editarDesde('${orden}')">Editar</button></td>
       </tr>`;
     });
