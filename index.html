@@ -157,6 +157,7 @@
 
 <script>
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx9JO4YU6ZTY84jM6DhiryelWc9WI72cwf0ROFxYFXWOSylDv1sD4Qce39e-bWicw_M0A/exec";
+const API_TOKEN = "2d9b74071edd30aa20b04fa52cd691e05e5c3f9225a801ee";
 let rowIndex = null;
 
 function selectColor(hex) {
@@ -223,7 +224,7 @@ async function cargarPendientes() {
   container.innerHTML = '<p style="font-size:13px;color:#888">Cargando...</p>';
   statusEl.style.display = 'none';
   try {
-    const res  = await fetch(SCRIPT_URL + '?action=pendientes');
+    const res  = await fetch(SCRIPT_URL + '?action=pendientes&token=' + API_TOKEN);
     const data = await res.json();
     if (!data.rows || data.rows.length === 0) {
       container.innerHTML = '<p style="font-size:13px;color:#888;padding:12px 0">No hay órdenes pendientes 🎉</p>';
@@ -303,7 +304,7 @@ async function buscarOrden() {
   if (!orden) return;
   showStatus('status-search', 'Buscando...', 'info');
   try {
-    const res  = await fetch(SCRIPT_URL + '?orden=' + encodeURIComponent(orden));
+    const res  = await fetch(SCRIPT_URL + '?orden=' + encodeURIComponent(orden) + '&token=' + API_TOKEN);
     const data = await res.json();
     if (data.found) {
       rowIndex = data.rowIndex;
@@ -353,7 +354,6 @@ async function guardar() {
     'Piezas x Trazo':            document.getElementById('piezas_trazo').value,
     'CANTIDAD Paños':            document.getElementById('cant_panos').value,
     'RENDIMIENTO (kg)':          document.getElementById('rendimiento').value,
-    'Piezas x Kilo':             document.getElementById('piezas_x_kilo').value,
     'Conjunto':                  document.getElementById('conjunto').value,
     'Envío Maquila':             document.getElementById('envio_maquila').value,
     'Recepción Maquila':         document.getElementById('recepcion_maquila').value,
@@ -369,7 +369,7 @@ async function guardar() {
     const colorHex = document.getElementById('color').dataset.hex || '';
     const res  = await fetch(SCRIPT_URL, {
       method: 'POST',
-      body: JSON.stringify({ row, rowIndex, colorHex })
+      body: JSON.stringify({ row, rowIndex, colorHex, token: API_TOKEN })
     });
     const data = await res.json();
     if (data.success) {
