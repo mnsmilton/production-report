@@ -159,6 +159,16 @@
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx9JO4YU6ZTY84jM6DhiryelWc9WI72cwf0ROFxYFXWOSylDv1sD4Qce39e-bWicw_M0A/exec";
 const API_TOKEN = "2d9b74071edd30aa20b04fa52cd691e05e5c3f9225a801ee";
 let rowIndex = null;
+let _rowCache = {};
+
+function norm(s) {
+  return String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+}
+function get(key) { return _rowCache[norm(key)]; }
+function setCache(obj) {
+  _rowCache = {};
+  Object.keys(obj).forEach(k => { _rowCache[norm(k)] = obj[k]; });
+}
 
 function selectColor(hex) {
   const colorEl = document.getElementById('color');
@@ -194,9 +204,10 @@ function switchTab(tab, el) {
 }
 
 function getEtapa(r) {
-  if (!r['Envio Maquila']) return { label: 'En corte', cls: 'etapa-corte' };
-  if (!r['Recepción Maquila']) return { label: 'En maquila', cls: 'etapa-maquila' };
-  if (!r['Recepción Serigrafía']) return { label: 'En serigrafía', cls: 'etapa-serigrafia' };
+  setCache(r);
+  if (!get('Envio Maquila')) return { label: 'En corte', cls: 'etapa-corte' };
+  if (!get('Recepción Maquila')) return { label: 'En maquila', cls: 'etapa-maquila' };
+  if (!get('Recepción Serigrafía')) return { label: 'En serigrafía', cls: 'etapa-serigrafia' };
   return { label: 'En bodega', cls: 'etapa-bodega' };
 }
 
@@ -234,17 +245,18 @@ async function cargarPendientes() {
     document.getElementById('count-label').textContent = data.rows.length + ' pendientes';
     let html = '<table class="pendientes-table"><thead><tr><th>Orden</th><th>Descripción</th><th>Color</th><th>Inicio corte</th><th>Días</th><th>Etapa</th><th></th></tr></thead><tbody>';
     data.rows.forEach(r => {
-      const orden = r['# ORDEN'] || '';
+      setCache(r);
+      const orden = get('# ORDEN') || '';
       const etapa = getEtapa(r);
       const colorCell = r['__colorHex']
         ? `<span style="display:inline-block;width:18px;height:18px;border-radius:3px;background:${r['__colorHex']};border:1px solid #ccc;vertical-align:middle;"></span>`
         : '—';
       html += `<tr>
         <td><strong>${orden}</strong></td>
-        <td>${r['Descripción'] || '-'}</td>
+        <td>${get('Descripción') || '-'}</td>
         <td>${colorCell}</td>
-        <td>${formatFecha(r['Inicio Corte'])}</td>
-        <td>${diasDesde(r['Inicio Corte'])}</td>
+        <td>${formatFecha(get('Inicio Corte'))}</td>
+        <td>${diasDesde(get('Inicio Corte'))}</td>
         <td><span class="etapa ${etapa.cls}">${etapa.label}</span></td>
         <td><button class="btn-edit" onclick="editarDesde('${orden}')">Editar</button></td>
       </tr>`;
@@ -308,27 +320,27 @@ async function buscarOrden() {
     const data = await res.json();
     if (data.found) {
       rowIndex = data.rowIndex;
-      const r  = data.row;
-      setField('orden', r['# ORDEN']);
-      setField('inicio_corte', r['Inicio Corte']);
-      setField('descripcion', r['Descripción']);
-      if (r['__colorHex']) { document.getElementById('color-picker').value = r['__colorHex']; selectColor(r['__colorHex']); }
-      setField('cant_piezas', r['Cantidad Piezas']);
-      setField('peso_trazo', r['Peso x Trazo (Gramos)']);
-      setField('piezas_trazo', r['Piezas x Trazo']);
-      setField('cant_panos', r['CANTIDAD Paños']);
-      setField('rendimiento', r['RENDIMIENTO (kg)']);
+      setCache(data.row);
+      setField('orden', get('# ORDEN'));
+      setField('inicio_corte', get('Inicio Corte'));
+      setField('descripcion', get('Descripción'));
+      if (data.row['__colorHex']) { document.getElementById('color-picker').value = data.row['__colorHex']; selectColor(data.row['__colorHex']); }
+      setField('cant_piezas', get('Cantidad Piezas'));
+      setField('peso_trazo', get('Peso x Trazo (Gramos)'));
+      setField('piezas_trazo', get('Piezas x Trazo'));
+      setField('cant_panos', get('CANTIDAD Paños'));
+      setField('rendimiento', get('RENDIMIENTO (kg)'));
       calcPiezasXKilo();
-      setField('conjunto', r['Conjunto']);
-      setField('envio_maquila', r['Envio Maquila']);
-      setField('recepcion_maquila', r['Recepción Maquila']);
-      setField('envio_serigrafia', r['Envio Serigrafía']);
-      setField('recepcion_serigrafia', r['Recepción Serigrafía']);
-      setField('prod_terminado', r['Producto Terminado Bodega']);
-      setField('codigo', r['Código']);
-      setField('piezas_danadas', r['Piezas Dañadas']);
-      setField('coleccion', r['Colección']);
-      setField('producto_tienda', r['Producto Tienda']);
+      setField('conjunto', get('Conjunto'));
+      setField('envio_maquila', get('Envio Maquila'));
+      setField('recepcion_maquila', get('Recepción Maquila'));
+      setField('envio_serigrafia', get('Envio Serigrafía'));
+      setField('recepcion_serigrafia', get('Recepción Serigrafía'));
+      setField('prod_terminado', get('Producto Terminado Bodega'));
+      setField('codigo', get('Código'));
+      setField('piezas_danadas', get('Piezas Dañadas'));
+      setField('coleccion', get('Colección'));
+      setField('producto_tienda', get('Producto Tienda'));
       document.getElementById('mode-badge').textContent = 'Editando fila ' + rowIndex;
       document.getElementById('mode-badge').className = 'badge badge-update';
       document.getElementById('form-body').style.display = 'block';
