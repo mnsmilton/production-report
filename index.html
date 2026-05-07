@@ -194,7 +194,7 @@ function switchTab(tab, el) {
 }
 
 function getEtapa(r) {
-  if (!r['Envío Maquila']) return { label: 'En corte', cls: 'etapa-corte' };
+  if (!r['Envio Maquila']) return { label: 'En corte', cls: 'etapa-corte' };
   if (!r['Recepción Maquila']) return { label: 'En maquila', cls: 'etapa-maquila' };
   if (!r['Recepción Serigrafía']) return { label: 'En serigrafía', cls: 'etapa-serigrafia' };
   return { label: 'En bodega', cls: 'etapa-bodega' };
@@ -234,7 +234,7 @@ async function cargarPendientes() {
     document.getElementById('count-label').textContent = data.rows.length + ' pendientes';
     let html = '<table class="pendientes-table"><thead><tr><th>Orden</th><th>Descripción</th><th>Color</th><th>Inicio corte</th><th>Días</th><th>Etapa</th><th></th></tr></thead><tbody>';
     data.rows.forEach(r => {
-      const orden = r['# Orden'] || '';
+      const orden = r['# ORDEN'] || '';
       const etapa = getEtapa(r);
       const colorCell = r['__colorHex']
         ? `<span style="display:inline-block;width:18px;height:18px;border-radius:3px;background:${r['__colorHex']};border:1px solid #ccc;vertical-align:middle;"></span>`
@@ -309,7 +309,7 @@ async function buscarOrden() {
     if (data.found) {
       rowIndex = data.rowIndex;
       const r  = data.row;
-      setField('orden', r['# Orden']);
+      setField('orden', r['# ORDEN']);
       setField('inicio_corte', r['Inicio Corte']);
       setField('descripcion', r['Descripción']);
       if (r['__colorHex']) { document.getElementById('color-picker').value = r['__colorHex']; selectColor(r['__colorHex']); }
@@ -320,9 +320,9 @@ async function buscarOrden() {
       setField('rendimiento', r['RENDIMIENTO (kg)']);
       calcPiezasXKilo();
       setField('conjunto', r['Conjunto']);
-      setField('envio_maquila', r['Envío Maquila']);
+      setField('envio_maquila', r['Envio Maquila']);
       setField('recepcion_maquila', r['Recepción Maquila']);
-      setField('envio_serigrafia', r['Envío Serigrafía']);
+      setField('envio_serigrafia', r['Envio Serigrafía']);
       setField('recepcion_serigrafia', r['Recepción Serigrafía']);
       setField('prod_terminado', r['Producto Terminado Bodega']);
       setField('codigo', r['Código']);
@@ -345,7 +345,7 @@ async function buscarOrden() {
 async function guardar() {
   showStatus('status-save', 'Guardando...', 'info');
   const row = {
-    '# Orden':                   document.getElementById('orden').value,
+    '# ORDEN':                   document.getElementById('orden').value,
     'Inicio Corte':              document.getElementById('inicio_corte').value,
     'Descripción':               document.getElementById('descripcion').value,
     'Color':                     '',
@@ -355,9 +355,9 @@ async function guardar() {
     'CANTIDAD Paños':            document.getElementById('cant_panos').value,
     'RENDIMIENTO (kg)':          document.getElementById('rendimiento').value,
     'Conjunto':                  document.getElementById('conjunto').value,
-    'Envío Maquila':             document.getElementById('envio_maquila').value,
+    'Envio Maquila':             document.getElementById('envio_maquila').value,
     'Recepción Maquila':         document.getElementById('recepcion_maquila').value,
-    'Envío Serigrafía':          document.getElementById('envio_serigrafia').value,
+    'Envio Serigrafía':          document.getElementById('envio_serigrafia').value,
     'Recepción Serigrafía':      document.getElementById('recepcion_serigrafia').value,
     'Producto Terminado Bodega': document.getElementById('prod_terminado').value,
     'Código':                    document.getElementById('codigo').value,
