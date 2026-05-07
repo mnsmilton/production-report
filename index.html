@@ -120,6 +120,7 @@
         <div class="f"><label>Conjunto</label><input type="text" id="conjunto" /></div>
         <div class="f"><label>Envío maquila</label><input type="date" id="envio_maquila" /></div>
         <div class="f"><label>Recepción maquila</label><input type="date" id="recepcion_maquila" /></div>
+        <div class="f"><label>Tiempo maquila (días)</label><input type="number" id="tiempo_maquila" readonly /></div>
       </div>
     </div>
 
@@ -128,6 +129,7 @@
       <div class="fg">
         <div class="f"><label>Envío serigrafía</label><input type="date" id="envio_serigrafia" /></div>
         <div class="f"><label>Recepción serigrafía</label><input type="date" id="recepcion_serigrafia" /></div>
+        <div class="f"><label>Tiempo serigrafía (días)</label><input type="number" id="tiempo_serigrafia" readonly /></div>
       </div>
     </div>
 
@@ -135,6 +137,7 @@
       <p class="section-title">Producto terminado</p>
       <div class="fg">
         <div class="f"><label>Producto terminado bodega</label><input type="date" id="prod_terminado" /></div>
+        <div class="f"><label>Tiempo detalles (días)</label><input type="number" id="tiempo_detalles" readonly /></div>
         <div class="f"><label>Código</label><input type="text" id="codigo" /></div>
         <div class="f"><label>Piezas dañadas</label><input type="number" id="piezas_danadas" /></div>
         <div class="f"><label>Colección</label><input type="text" id="coleccion" /></div>
@@ -145,6 +148,8 @@
       <p class="section-title">Tienda</p>
       <div class="fg">
         <div class="f"><label>Producto tienda</label><input type="date" id="producto_tienda" /></div>
+        <div class="f"><label>Tiempo en bodega (días)</label><input type="number" id="tiempo_bodega" readonly /></div>
+        <div class="f"><label>Duración total (días)</label><input type="number" id="duracion_total" readonly /></div>
       </div>
     </div>
 
@@ -189,11 +194,29 @@ function calcRendimiento() {
   if (peso && panos) document.getElementById('rendimiento').value = ((peso * panos) / 1000).toFixed(3);
   calcPiezasXKilo();
 }
+function daysBetween(id1, id2) {
+  const d1 = new Date(document.getElementById(id1).value);
+  const d2 = new Date(document.getElementById(id2).value);
+  if (isNaN(d1) || isNaN(d2)) return '';
+  return Math.round((d2 - d1) / 86400000);
+}
+function calcTiempos() {
+  const set = (id, val) => { document.getElementById(id).value = val !== '' ? val : ''; };
+  set('tiempo_maquila',   daysBetween('envio_maquila',   'recepcion_maquila'));
+  set('tiempo_serigrafia', daysBetween('envio_serigrafia', 'recepcion_serigrafia'));
+  set('tiempo_detalles',  daysBetween('recepcion_serigrafia', 'prod_terminado'));
+  set('tiempo_bodega',    daysBetween('prod_terminado',   'producto_tienda'));
+  set('duracion_total',   daysBetween('inicio_corte',     'producto_tienda'));
+}
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('color-picker').addEventListener('input', e => selectColor(e.target.value));
   document.getElementById('peso_trazo').addEventListener('input', calcRendimiento);
   document.getElementById('cant_panos').addEventListener('input', calcRendimiento);
   document.getElementById('cant_piezas').addEventListener('input', calcPiezasXKilo);
+  ['envio_maquila','recepcion_maquila','envio_serigrafia','recepcion_serigrafia',
+   'prod_terminado','producto_tienda','inicio_corte'].forEach(id => {
+    document.getElementById(id).addEventListener('change', calcTiempos);
+  });
 });
 
 function switchTab(tab, el) {
@@ -341,6 +364,8 @@ async function buscarOrden() {
       setField('piezas_danadas', get('Piezas Dañadas'));
       setField('coleccion', get('Colección'));
       setField('producto_tienda', get('Producto Tienda'));
+      calcTiempos();
+      calcPiezasXKilo();
       document.getElementById('mode-badge').textContent = 'Editando fila ' + rowIndex;
       document.getElementById('mode-badge').className = 'badge badge-update';
       document.getElementById('form-body').style.display = 'block';
@@ -366,6 +391,7 @@ async function guardar() {
     'Piezas x Trazo':            document.getElementById('piezas_trazo').value,
     'CANTIDAD Paños':            document.getElementById('cant_panos').value,
     'RENDIMIENTO (kg)':          document.getElementById('rendimiento').value,
+    'Pieza x Kilo':              document.getElementById('piezas_x_kilo').value,
     'Conjunto':                  document.getElementById('conjunto').value,
     'Envio Maquila':             document.getElementById('envio_maquila').value,
     'Recepción Maquila':         document.getElementById('recepcion_maquila').value,
@@ -375,7 +401,12 @@ async function guardar() {
     'Código':                    document.getElementById('codigo').value,
     'Piezas Dañadas':            document.getElementById('piezas_danadas').value,
     'Colección':                 document.getElementById('coleccion').value,
-    'Producto Tienda':           document.getElementById('producto_tienda').value
+    'Producto Tienda':           document.getElementById('producto_tienda').value,
+    'TIEMPO MAQUILA':            document.getElementById('tiempo_maquila').value,
+    'TIEMPO SERIGRAFIA':         document.getElementById('tiempo_serigrafia').value,
+    'TIEMPO DETALLES':           document.getElementById('tiempo_detalles').value,
+    'TIEMPO EN BODEGA':          document.getElementById('tiempo_bodega').value,
+    'Duración Total':            document.getElementById('duracion_total').value
   };
   try {
     const colorHex = document.getElementById('color').dataset.hex || '';
