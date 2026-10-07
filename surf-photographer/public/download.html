@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Tu descarga</title>
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<main class="center"><div class="panel narrow" id="box"><p>Cargando…</p></div></main>
+<script type="module">
+const box = document.querySelector('#box');
+const token = location.pathname.split('/')[2];
+const add = (tag, text, cls) => { const n = document.createElement(tag); n.textContent = text; if (cls) n.className = cls; box.append(n); return n; };
+try {
+  const r = await fetch('/api/downloads/' + token);
+  const j = await r.json();
+  box.replaceChildren();
+  if (!r.ok) { add('h2', j.error); const a = add('a', 'Volver al inicio'); a.href = '/'; }
+  else {
+    add('h2', '¡Gracias por tu compra! 🤙 / Thank you!');
+    if (j.thumb) { const i = new Image(); i.src = j.thumb; i.alt = ''; box.append(i); }
+    if (j.title) add('p', j.title);
+    const a = add('a', j.remaining > 0 ? 'Descargar original / Download original' : 'Límite de descargas alcanzado', 'btn sun');
+    if (j.remaining > 0) a.href = `/d/${token}/file`;
+    add('p', `Descargas restantes: ${j.remaining} · Vence: ${new Date(j.expires_at).toLocaleDateString()}. Guarda este enlace.`, 'msg');
+  }
+} catch { box.textContent = 'Error de red'; }
+</script>
+</body>
+</html>

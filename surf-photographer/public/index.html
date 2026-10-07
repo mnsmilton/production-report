@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Surf Lens CR</title>
+<meta name="description" content="Fotos y videos de surf en Costa Rica. Encuentra tu sesión y descarga el original en alta calidad.">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="logo" href="/" id="logo">Surf Lens</a>
+  <div class="lang" role="group" aria-label="Idioma">
+    <button data-lang="es" aria-pressed="true">ES</button><button data-lang="en" aria-pressed="false">EN</button>
+  </div>
+</div></header>
+
+<section class="hero">
+  <div class="wrap">
+    <h1 id="h1"></h1>
+    <p data-i18n="hero_sub"></p>
+    <a class="cta" href="#galeria" data-i18n="hero_cta"></a>
+  </div>
+  <svg class="waves" viewBox="0 0 1440 70" preserveAspectRatio="none" aria-hidden="true"><path d="M0 40c120 30 240 30 360 0s240-30 360 0 240 30 360 0 240-30 360 0v30H0z"/></svg>
+</section>
+
+<main class="wrap" id="galeria">
+  <div class="filters">
+    <label><span data-i18n="f_spot"></span><select id="fSpot"></select></label>
+    <label><span data-i18n="f_date"></span><select id="fDate"></select></label>
+    <div class="chips">
+      <button class="chip" data-kind="" aria-pressed="true" data-i18n="k_all"></button>
+      <button class="chip" data-kind="photo" aria-pressed="false" data-i18n="k_photo"></button>
+      <button class="chip" data-kind="video" aria-pressed="false" data-i18n="k_video"></button>
+    </div>
+  </div>
+  <p class="hint" data-i18n="hint"></p>
+  <div class="grid" id="grid"></div>
+</main>
+
+<footer><div class="wrap" id="foot"></div></footer>
+
+<dialog id="dlg">
+  <button class="close" id="dlgClose" aria-label="Cerrar">✕</button>
+  <div class="modal">
+    <div class="stage" id="stage"></div>
+    <div class="side">
+      <h2 id="mTitle"></h2>
+      <p class="sub" id="mSub"></p>
+      <ul><li data-i18n="b1"></li><li data-i18n="b2"></li><li id="b3"></li></ul>
+      <div id="buyStep">
+        <button class="btn sun" id="buyBtn" style="width:100%"></button>
+      </div>
+      <form id="emailStep" hidden>
+        <label class="field"><span data-i18n="email_label"></span>
+          <input type="email" id="email" required autocomplete="email" placeholder="you@email.com"></label>
+        <div id="paypal-box"></div>
+        <button class="btn sun" id="demoBtn" type="button" hidden style="width:100%"></button>
+        <button class="btn sun" id="goBtn" type="submit" style="width:100%;margin-top:8px" data-i18n="continue"></button>
+      </form>
+      <div class="msg" id="msg" role="status"></div>
+    </div>
+  </div>
+</dialog>
+<script src="/app.js" type="module"></script>
+</body>
+</html>
