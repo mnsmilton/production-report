@@ -14,7 +14,7 @@ export const config = {
   production: e.NODE_ENV === 'production',
   dataDir: path.resolve(e.DATA_DIR || path.join(root, 'data')),
 
-  brand: e.BRAND_NAME || 'Surf Lens CR',
+  brand: e.BRAND_NAME || 'Chonfotos',
   tagline: e.TAGLINE || 'Costa Rica · Fotografía y video de surf',
   whatsapp: (e.WHATSAPP || '').replace(/[^\d]/g, ''),
   instagram: e.INSTAGRAM || '',

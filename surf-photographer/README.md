@@ -1,4 +1,4 @@
-# Surf Lens CR – galería de surf con marca de agua y venta de descargas
+# Chonfotos – galería de surf con marca de agua y venta de descargas
 
 Sitio para un fotógrafo de surf: sube fotos/videos, se publican **con marca de agua**, y el cliente paga (por defecto **$20 USD**) para descargar el **original sin marca**.
 
