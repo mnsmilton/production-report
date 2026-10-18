@@ -30,3 +30,11 @@ Necesita un servidor con disco persistente (Render/Railway con volumen, VPS, Fly
 
 ## Estructura
 `server.js` rutas · `media.js` marca de agua (sharp + ffmpeg) · `paypal.js` pagos · `db.js` SQLite · `public/` interfaz.
+
+## Publicar en Render
+1. Sube el repo a GitHub (ya está) y entra a render.com → **New → Blueprint**, elige el repositorio y la rama. Render lee `render.yaml` y crea el servicio con su disco.
+2. Completa las variables que pide (`ADMIN_PASSWORD`, `BASE_URL`, `SINPE_NUMBER`, `SINPE_NAME`, `WHATSAPP`, credenciales de PayPal).
+3. Cuando termine el deploy abre `https://<tu-servicio>.onrender.com/admin`.
+4. Pon `BASE_URL` con esa dirección (o tu dominio propio) para que los QR y los enlaces salgan bien.
+
+Usa Docker (incluye ffmpeg y las fuentes) y un disco persistente montado en `/var/data`: ahí viven la base de datos, los originales y las vistas previas.

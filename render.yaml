@@ -1,0 +1,40 @@
+# Blueprint de Render para Chonfotos (el sitio vive en la carpeta surf-photographer/)
+services:
+  - type: web
+    name: chonfotos
+    runtime: docker
+    rootDir: surf-photographer
+    dockerfilePath: ./Dockerfile
+    plan: starter            # los discos persistentes requieren un plan de pago
+    healthCheckPath: /api/config
+    disk:
+      name: chonfotos-data   # base de datos + originales + vistas previas
+      mountPath: /var/data
+      sizeGB: 10
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATA_DIR
+        value: /var/data
+      - key: BRAND_NAME
+        value: Chonfotos
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: BASE_URL          # p. ej. https://chonfotos.onrender.com o tu dominio
+        sync: false
+      - key: SINPE_NUMBER
+        sync: false
+      - key: SINPE_NAME
+        sync: false
+      - key: SINPE_RATE
+        value: "520"
+      - key: WHATSAPP          # solo dígitos con código de país, ej. 50688888888
+        sync: false
+      - key: PAYPAL_ENV
+        value: sandbox         # cambia a "live" cuando termines de probar
+      - key: PAYPAL_CLIENT_ID
+        sync: false
+      - key: PAYPAL_SECRET
+        sync: false
