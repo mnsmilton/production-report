@@ -26,6 +26,17 @@ export const config = {
   maxUploadMb: Number(e.MAX_UPLOAD_MB) || 2000,
 
   adminPassword: e.ADMIN_PASSWORD || '',
+  adminEmail: e.ADMIN_EMAIL || '',
+
+  // SINPE Móvil: el cliente transfiere y el fotógrafo confirma a mano en el panel.
+  sinpe: {
+    number: (e.SINPE_NUMBER || '').replace(/[^\d]/g, ''),
+    name: e.SINPE_NAME || '',
+    rate: Number(e.SINPE_RATE) || 520, // colones por dólar (editable luego desde el panel)
+  },
+  // Paquetes por defecto "cantidad:precio_usd,..." (editables desde el panel)
+  defaultPacks: (e.DEFAULT_PACKS || '3:50,5:75').split(',').map((x) => x.split(':').map(Number))
+    .filter(([q, p]) => q > 1 && p > 0).map(([q, p]) => ({ qty: q, price_cents: Math.round(p * 100) })),
   sessionSecret: e.SESSION_SECRET || crypto.randomBytes(32).toString('hex'),
 
   paypal: {

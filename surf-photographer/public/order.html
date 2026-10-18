@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Tu pedido</title>
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<main class="center"><div class="panel narrow wide" id="box"><p>…</p></div></main>
+<script type="module">
+const L = localStorage.getItem('lang') || ((navigator.language || 'es').startsWith('en') ? 'en' : 'es');
+const T = {
+  es: { title: 'Casi listo', pay: 'Paga por SINPE Móvil', step1: 'Envía exactamente', to: 'a este número', who: 'a nombre de', ref: 'En el detalle escribe', copy: 'Copiar', copied: '¡Copiado!',
+    done: 'Ya hice el pago', note: 'Tu nombre o últimos 4 dígitos del comprobante (opcional)', wait: 'Estamos verificando tu pago',
+    waitSub: 'Esta página se actualiza sola. Apenas se confirme verás tus descargas (también te llegan por correo o WhatsApp).',
+    cancelled: 'Este pedido fue cancelado.', home: 'Volver al inicio', items: 'Tu pedido', help: 'Escríbenos por WhatsApp', paid: '¡Pago confirmado!', go: 'Ir a mis descargas', err: 'Pedido no encontrado' },
+  en: { title: 'Almost there', pay: 'Pay with SINPE Móvil', step1: 'Send exactly', to: 'to this number', who: 'in the name of', ref: 'In the description write', copy: 'Copy', copied: 'Copied!',
+    done: "I've paid", note: 'Your name or last 4 digits of the receipt (optional)', wait: "We're verifying your payment",
+    waitSub: 'This page updates by itself. Once confirmed you will see your downloads (also sent by email or WhatsApp).',
+    cancelled: 'This order was cancelled.', home: 'Back to home', items: 'Your order', help: 'Message us on WhatsApp', paid: 'Payment confirmed!', go: 'Go to my downloads', err: 'Order not found' },
+}[L];
+const box = document.querySelector('#box');
+const id = location.pathname.split('/')[2];
+const el = (tag, props = {}, ...kids) => { const n = Object.assign(document.createElement(tag), props); n.append(...kids); return n; };
+const crc = (n) => '₡' + new Intl.NumberFormat('es-CR').format(n);
+let timer;
+
+function copyBtn(text) {
+  const b = el('button', { className: 'btn ghost small', type: 'button' }, T.copy);
+  b.addEventListener('click', async () => { try { await navigator.clipboard.writeText(text); b.textContent = T.copied; setTimeout(() => { b.textContent = T.copy; }, 1500); } catch { prompt('', text); } });
+  return b;
+}
+
+function render(o) {
+  const parts = [];
+  parts.push(el('div', { style: 'display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:10px 0' }, ...o.items.slice(0, 6).map((i) => el('img', { src: i.thumb, alt: '', style: 'height:56px;border-radius:8px;margin:0' }))));
+  if (o.status === 'paid') {
+    parts.unshift(el('h2', {}, T.paid));
+    parts.push(el('a', { className: 'btn sun', href: o.download, style: 'display:block;margin-top:14px' }, T.go));
+    setTimeout(() => location.replace(o.download), 1200);
+  } else if (o.status === 'cancelled') {
+    parts.unshift(el('h2', {}, T.cancelled)); parts.push(el('a', { className: 'btn', href: '/' }, T.home));
+  } else if (o.status === 'reported') {
+    parts.unshift(el('h2', {}, T.wait)); parts.push(el('p', { className: 'note' }, T.waitSub));
+    if (o.whatsapp) parts.push(el('a', { className: 'btn ghost small', href: `https://wa.me/${o.whatsapp}`, target: '_blank', rel: 'noopener' }, T.help));
+  } else if (o.sinpe) {
+    const s = o.sinpe;
+    parts.unshift(el('h2', {}, T.pay));
+    parts.push(el('div', { className: 'sinpe' },
+      el('div', {}, T.step1), el('div', { className: 'v' }, crc(s.amount_crc)),
+      el('div', { className: 'copyrow' }, el('span', {}, `${T.to}: `, el('b', {}, s.number)), copyBtn(s.number)),
+      s.name ? el('div', {}, `${T.who} `, el('b', {}, s.name)) : '',
+      el('div', { className: 'copyrow' }, el('span', {}, `${T.ref}: `, el('b', {}, s.reference)), copyBtn(s.reference))));
+    const note = el('input', { placeholder: T.note, maxLength: 120, style: 'padding:11px 12px;border-radius:10px;border:1px solid var(--line);width:100%;margin-top:12px;font:inherit' });
+    const done = el('button', { className: 'btn sun', type: 'button', style: 'width:100%;margin-top:8px' }, T.done);
+    done.addEventListener('click', async () => {
+      done.disabled = true;
+      await fetch(`/api/orders/${id}/reported`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ note: note.value }) });
+      load();
+    });
+    parts.push(note, done);
+  } else {
+    parts.unshift(el('h2', {}, T.title));
+  }
+  box.replaceChildren(...parts);
+}
+
+async function load() {
+  const r = await fetch('/api/orders/' + id);
+  if (!r.ok) { box.replaceChildren(el('h2', {}, T.err), el('a', { href: '/' }, T.home)); return; }
+  const o = await r.json();
+  const typing = document.activeElement?.tagName === 'INPUT';
+  if (!(typing && o.status === 'pending')) render(o); // no pisar lo que el cliente está escribiendo
+  clearTimeout(timer);
+  if (['pending', 'reported'].includes(o.status)) timer = setTimeout(load, 6000);
+}
+load();
+</script>
+</body>
+</html>

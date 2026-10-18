@@ -4,29 +4,44 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<title>Tu descarga</title>
+<title>Tus descargas</title>
 <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-<main class="center"><div class="panel narrow" id="box"><p>Cargando…</p></div></main>
+<main class="center"><div class="panel narrow wide" id="box"><p>…</p></div></main>
 <script type="module">
+const L = localStorage.getItem('lang') || ((navigator.language || 'es').startsWith('en') ? 'en' : 'es');
+const T = {
+  es: { thanks: '¡Gracias por tu compra! 🤙', dl: 'Descargar', all: 'Descargar todo', left: (n) => `${n} descargas restantes`, none: 'Límite alcanzado',
+    keep: (d) => `Guarda este enlace. Vence el ${d}.`, wa: 'Enviarme el enlace por WhatsApp', copy: 'Copiar enlace', copied: '¡Copiado!', home: 'Volver al inicio', allNote: 'Si tu navegador pregunta, permite las descargas múltiples.' },
+  en: { thanks: 'Thank you for your purchase! 🤙', dl: 'Download', all: 'Download all', left: (n) => `${n} downloads left`, none: 'Limit reached',
+    keep: (d) => `Keep this link. It expires on ${d}.`, wa: 'Send me the link on WhatsApp', copy: 'Copy link', copied: 'Copied!', home: 'Back to home', allNote: 'If your browser asks, allow multiple downloads.' },
+}[L];
 const box = document.querySelector('#box');
 const token = location.pathname.split('/')[2];
-const add = (tag, text, cls) => { const n = document.createElement(tag); n.textContent = text; if (cls) n.className = cls; box.append(n); return n; };
-try {
-  const r = await fetch('/api/downloads/' + token);
-  const j = await r.json();
-  box.replaceChildren();
-  if (!r.ok) { add('h2', j.error); const a = add('a', 'Volver al inicio'); a.href = '/'; }
-  else {
-    add('h2', '¡Gracias por tu compra! 🤙 / Thank you!');
-    if (j.thumb) { const i = new Image(); i.src = j.thumb; i.alt = ''; box.append(i); }
-    if (j.title) add('p', j.title);
-    const a = add('a', j.remaining > 0 ? 'Descargar original / Download original' : 'Límite de descargas alcanzado', 'btn sun');
-    if (j.remaining > 0) a.href = `/d/${token}/file`;
-    add('p', `Descargas restantes: ${j.remaining} · Vence: ${new Date(j.expires_at).toLocaleDateString()}. Guarda este enlace.`, 'msg');
-  }
-} catch { box.textContent = 'Error de red'; }
+const el = (tag, props = {}, ...kids) => { const n = Object.assign(document.createElement(tag), props); n.append(...kids); return n; };
+const r = await fetch('/api/downloads/' + token);
+const j = await r.json().catch(() => ({}));
+if (!r.ok) {
+  box.replaceChildren(el('h2', {}, j.error || 'Error'), el('a', { href: '/' }, T.home));
+} else {
+  const rows = j.items.map((i) => el('div', { className: 'dl' },
+    el('img', { src: i.thumb, alt: '' }),
+    el('div', {}, el('strong', {}, i.title || (i.kind === 'video' ? 'Video' : 'Foto')), el('div', { className: 'note' }, T.left(i.remaining))),
+    i.remaining > 0 ? el('a', { className: 'btn small', href: `/d/${token}/${i.id}`, download: '' }, T.dl) : el('span', { className: 'note' }, T.none)));
+  const all = j.items.length > 1 ? el('button', { className: 'btn sun', type: 'button', style: 'width:100%;margin:6px 0' }, T.all) : '';
+  if (all) all.addEventListener('click', () => j.items.filter((i) => i.remaining > 0).forEach((i, n) => setTimeout(() => {
+    const a = el('a', { href: `/d/${token}/${i.id}`, download: '' }); document.body.append(a); a.click(); a.remove();
+  }, n * 900)));
+  const copy = el('button', { className: 'btn ghost small', type: 'button' }, T.copy);
+  copy.addEventListener('click', async () => { try { await navigator.clipboard.writeText(j.link); copy.textContent = T.copied; } catch { prompt('', j.link); } });
+  box.replaceChildren(
+    el('h2', {}, T.thanks), el('div', { style: 'margin-top:12px' }, ...rows), all,
+    all ? el('p', { className: 'note' }, T.allNote) : '',
+    el('p', { className: 'note' }, T.keep(new Date(j.expires_at).toLocaleDateString())),
+    el('div', { style: 'display:flex;gap:8px;justify-content:center;flex-wrap:wrap' },
+      el('a', { className: 'btn ghost small', target: '_blank', rel: 'noopener', href: `https://wa.me/?text=${encodeURIComponent(j.link)}` }, T.wa), copy));
+}
 </script>
 </body>
 </html>

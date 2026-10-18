@@ -21,11 +21,30 @@
 <div class="wrap" id="appView" hidden>
   <header style="display:flex;justify-content:space-between;align-items:center;padding:18px 0">
     <h1 style="margin:0;font-size:22px">Panel de Chonfotos</h1>
-    <span><a href="/" target="_blank">Ver sitio</a> · <a href="#" id="logout">Salir</a></span>
+    <span><a href="/" target="_blank">Ver sitio</a> · <a href="/card/_" target="_blank">QR del sitio</a> · <a href="#" id="logout">Salir</a></span>
   </header>
 
+  <section class="panel" id="openPanel" hidden>
+    <h2>Pagos SINPE por confirmar <span class="tag reported" id="openN"></span></h2>
+    <p class="note">Revisa tu app del banco: confirma solo si ves el monto y la referencia (CH1234) en el detalle.</p>
+    <div class="items" id="open"></div>
+  </section>
+
   <section class="panel">
-    <h2>Subir fotos y videos</h2>
+    <h2>1. Sesiones</h2>
+    <p class="note">Una sesión es una salida (playa + fecha). Cada una tiene su propio enlace y QR para repartir en la playa.</p>
+    <form id="sesForm" class="row">
+      <label class="field">Nombre <input id="sName" required maxlength="100" placeholder="Amanecer en Hermosa"></label>
+      <label class="field">Playa / spot <input id="sSpot" maxlength="80" placeholder="Playa Hermosa"></label>
+      <label class="field">Fecha <input type="date" id="sDate"></label>
+      <label class="field">Toda la sesión (USD, opcional) <input type="number" id="sAll" min="1" step="1" placeholder="p. ej. 60"></label>
+      <div style="align-self:end"><button class="btn">Crear sesión</button></div>
+    </form>
+    <div class="items" id="sessions"></div>
+  </section>
+
+  <section class="panel">
+    <h2>2. Subir fotos y videos</h2>
     <form id="upForm">
       <div class="drop" id="drop">
         Arrastra aquí tus archivos o <label style="color:var(--sea);cursor:pointer;text-decoration:underline">elígelos
@@ -33,10 +52,8 @@
         <div id="picked" style="margin-top:6px"></div>
       </div>
       <div class="row" style="margin-top:14px">
-        <label class="field">Playa / spot <input id="spot" list="spots" placeholder="Playa Hermosa, Santa Teresa…"></label>
-        <datalist id="spots"></datalist>
-        <label class="field">Fecha de la sesión <input type="date" id="date"></label>
-        <label class="field">Precio (USD) <input type="number" id="price" min="1" step="0.5" value="20"></label>
+        <label class="field">Sesión <select id="upSession" required></select></label>
+        <label class="field">Precio por archivo (USD) <input type="number" id="price" min="1" step="0.5" value="20"></label>
         <label class="field">Título (opcional) <input id="title" maxlength="120"></label>
       </div>
       <button class="btn" id="upBtn">Subir con marca de agua</button>
@@ -45,8 +62,20 @@
   </section>
 
   <section class="panel">
+    <h2>3. Precios y paquetes</h2>
+    <form id="setForm">
+      <div id="packRows" class="items"></div>
+      <button class="btn ghost small" type="button" id="addPack" style="margin:8px 0">+ Agregar paquete</button>
+      <div class="row">
+        <label class="field">Tipo de cambio SINPE (₡ por $1) <input type="number" id="rate" min="1" step="1"></label>
+      </div>
+      <button class="btn">Guardar precios</button> <span class="msg" id="setMsg"></span>
+    </form>
+  </section>
+
+  <section class="panel">
     <h2>Ventas</h2>
-    <div class="stats"><div><b id="sTotal">$0</b>Total vendido</div><div><b id="sCount">0</b>Ventas</div></div>
+    <div class="stats"><div><b id="sTotal">$0</b>Total vendido</div><div><b id="sCount">0</b>Pedidos pagados</div></div>
     <div class="items" id="orders" style="margin-top:14px"></div>
   </section>
 

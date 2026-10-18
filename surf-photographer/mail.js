@@ -18,3 +18,9 @@ export async function sendDownloadEmail({ to, title, url }) {
       `Thanks for your purchase! Download your original file here:\n${url}\n\n${title || ''}`,
   });
 }
+
+/** Aviso opcional al fotógrafo (p. ej. cuando un cliente reporta un pago SINPE). */
+export async function notifyAdmin(subject, text) {
+  if (!transport || !config.adminEmail) return;
+  await transport.sendMail({ from: smtp.from || smtp.user, to: config.adminEmail, subject, text });
+}
